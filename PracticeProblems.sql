@@ -244,7 +244,7 @@ SELECT c.CustomerID, c.CompanyName, SUM(od.unitPrice * od.Quantity) AS TotalOrde
 
 -- 34
 
-SELECT c.CustomerID, c.CompanyName, o.OrderID, SUM(od.unitPrice * od.Quantity) AS TotalsWithoutDiscount, SUM(od.unitPrice * od.Quantity * (1-od.Discount)) AS TotalsWithDiscount
+SELECT c.CustomerID, c.CompanyName, SUM(od.unitPrice * od.Quantity) AS TotalsWithoutDiscount, SUM(od.unitPrice * od.Quantity * (1-od.Discount)) AS TotalsWithDiscount
 	FROM Customers c
     JOIN Orders o
         ON c.CustomerID = o.CustomerID
