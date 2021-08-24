@@ -178,12 +178,14 @@ ORDER BY ShipCountry
 
 -- 28
 
-SELECT ShipCountry, AVG(CASE WHEN OrderDate BETWEEN '2015-05-06 18:00:00' AND '2016-05-06 18:00:00' THEN Freight END) AS AverageFreight
+SELECT ShipCountry, AVG(Freight) AS AverageFreight
 	FROM orders
+    WHERE OrderDate 
+		BETWEEN (SELECT DATE_ADD(MAX(OrderDate), INTERVAL -12 MONTH) FROM Orders)
+		AND (SELECT MAX(OrderDate) FROM Orders)
     GROUP BY ShipCountry
     ORDER BY AverageFreight DESC
     LIMIT 3;
-
 -- 29
 
 SELECT e.EmployeeID, e.LastName, o.OrderID, p.ProductName, od.Quantity
