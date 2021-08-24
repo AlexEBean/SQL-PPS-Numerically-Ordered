@@ -231,7 +231,7 @@ SELECT c.CustomerID, c.CompanyName, o.OrderID, SUM(od.unitPrice * od.Quantity) A
 
 -- 33
 
-SELECT c.CustomerID, c.CompanyName, o.OrderID, SUM(od.unitPrice * od.Quantity) AS TotalOrderAmount
+SELECT c.CustomerID, c.CompanyName, SUM(od.unitPrice * od.Quantity) AS TotalOrderAmount
 	FROM Customers c
     JOIN Orders o
         ON c.CustomerID = o.CustomerID
