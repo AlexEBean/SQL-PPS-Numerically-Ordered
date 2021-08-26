@@ -186,6 +186,7 @@ SELECT ShipCountry, AVG(Freight) AS AverageFreight
     GROUP BY ShipCountry
     ORDER BY AverageFreight DESC
     LIMIT 3;
+
 -- 29
 
 SELECT e.EmployeeID, e.LastName, o.OrderID, p.ProductName, od.Quantity
@@ -244,7 +245,10 @@ SELECT c.CustomerID, c.CompanyName, SUM(od.unitPrice * od.Quantity) AS TotalOrde
 
 -- 34
 
-SELECT c.CustomerID, c.CompanyName, SUM(od.unitPrice * od.Quantity) AS TotalsWithoutDiscount, SUM(od.unitPrice * od.Quantity * (1-od.Discount)) AS TotalsWithDiscount
+SELECT 
+    c.CustomerID, c.CompanyName, 
+    SUM(od.unitPrice * od.Quantity) AS TotalsWithoutDiscount, 
+    SUM(od.unitPrice * od.Quantity * (1-od.Discount)) AS TotalsWithDiscount
 	FROM Customers c
     JOIN Orders o
         ON c.CustomerID = o.CustomerID
@@ -254,7 +258,6 @@ SELECT c.CustomerID, c.CompanyName, SUM(od.unitPrice * od.Quantity) AS TotalsWit
     GROUP BY c.CustomerID
     HAVING (TotalsWithDiscount >= 10000)
     ORDER BY TotalsWithDiscount DESC;
-
 
 -- 35
 

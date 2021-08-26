@@ -1,6 +1,6 @@
-SELECT p.ProductID, DATE(OrderDate) AS OrderDate, OrderQty AS Qty, DATE(SellStartDate) AS SellStartDate, DATE(SellEndDate) AS SellEndDate, 
+SELECT p.ProductID, DATE(h.OrderDate) AS OrderDate, d.OrderQty AS Qty, DATE(p.SellStartDate) AS SellStartDate, DATE(p.SellEndDate) AS SellEndDate, 
 	CASE
-		WHEN OrderDate < SellStartDate
+		WHEN h.OrderDate < p.SellStartDate
         THEN 'Sold before start date'
         ELSE 'Sold after end date'
     END AS ProblemType
@@ -9,5 +9,5 @@ SELECT p.ProductID, DATE(OrderDate) AS OrderDate, OrderQty AS Qty, DATE(SellStar
 		ON p.ProductID = d.ProductID
 	JOIN SalesOrderHeader h
 		ON d.SalesOrderID = h.SalesOrderID
-	WHERE OrderDate < SellStartDate OR SellEndDate < OrderDate
-    ORDER BY p.ProductID, OrderDate;
+	WHERE h.OrderDate < p.SellStartDate OR p.SellEndDate < h.OrderDate
+    ORDER BY p.ProductID, h.OrderDate;

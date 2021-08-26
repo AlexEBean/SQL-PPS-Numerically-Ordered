@@ -1,3 +1,4 @@
 SELECT ProductID, COUNT(StandardCost) AS TotalPriceChanges 
 	FROM ProductCostHistory
-    GROUP BY ProductID;
+    GROUP BY ProductID
+    ORDER BY ProductID;
