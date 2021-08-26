@@ -6,13 +6,6 @@ SELECT OrderID, ProductID, UnitPrice, Quantity, (UnitPrice * Quantity) AS TotalP
 	FROM OrderDetails
     ORDER BY OrderId, ProductID;
 
--- 23
-
-SELECT productID, ProductName, UnitsInStock, UnitsOnOrder, ReorderLevel, Discontinued
-	FROM products
-    WHERE UnitsInStock + UnitsOnOrder <= ReorderLevel AND Discontinued = 0
-    ORDER BY ProductID;
-
 -- 28
 
 SELECT ShipCountry, AVG(Freight) AS AverageFreight

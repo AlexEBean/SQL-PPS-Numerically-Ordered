@@ -3,26 +3,16 @@ SELECT CustomerID, CompanyName, Region
     ORDER BY Region IS NULL, region, CustomerID;
 
 -- More explicit way of writing this
-Select
 
+SELECT
+  CustomerID,
+  CompanyName,
+  Region
+FROM Customers
+ ORDER BY
+  CASE
+    WHEN Region IS NULL THEN 1
+    ELSE 0
+  END,
+  Region,
   CustomerID
-
-  ,CompanyName
-
- ,Region
-
-From Customers
-
- Order By
-
-  Case
-
-    when Region is null then 1
-
-   else 0
-
-  End
-
- ,Region
-
- ,CustomerID
