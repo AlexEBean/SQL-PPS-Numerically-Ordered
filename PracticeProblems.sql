@@ -284,6 +284,13 @@ SELECT OrderID, COUNT(OrderId) AS TotalOrderDetails
     ORDER BY TotalOrderDetails DESC
     LIMIT 10;
 
+-- 37
+
+SELECT OrderID
+	FROM orders
+    ORDER BY RAND()
+	LIMIT 10;
+
 -- 38
 
 SELECT OrderID
