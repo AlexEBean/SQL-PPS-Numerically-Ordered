@@ -324,6 +324,32 @@ SELECT *
 	FROM SecondTable
 ORDER BY IFNULL(SupplierCountry, CustomerCountry);
 
+-- 55
+
+WITH OrdersByCountry AS ( 
+    SELECT 
+        ShipCountry,
+        CustomerID, 
+        OrderID, 
+        DATE(OrderDate) AS OrderDate,
+		ROW_NUMBER() 
+			OVER (PARTITION BY ShipCountry 
+					ORDER BY OrderID
+				) AS RowNumberPerCountry
+		FROM Orders 
+) 
+
+SELECT
+    ShipCountry,
+	CustomerID, 
+	OrderID, 
+	OrderDate
+	FROM
+		OrdersByCountry 
+	WHERE 
+		RowNumberPerCountry = 1 
+	ORDER BY ShipCountry;
+
 -- More SQL (Second Problem Set)
 
 -- 8
@@ -358,6 +384,46 @@ SELECT p.ProductID, p.ProductName
 
 -- I don't think I need a subquery or CTE for this problem since I just need to compare two 
 -- preexisting columns on a row-by-row basis.
+
+-- 19
+
+WITH RawMarginData AS (
+	SELECT 
+		ProductID, 
+		ProductName, 
+		StandardCost, 
+		ListPrice,
+		ListPrice - StandardCost AS RawMargin
+		FROM product p
+        WHERE StandardCost != 0
+		ORDER BY ProductName
+)
+
+SELECT *, 
+	NTILE(4) OVER (
+        ORDER BY RawMargin DESC
+    ) AS Quartile
+	FROM RawMarginData
+	ORDER BY ProductName;
+
+-- 23
+
+WITH DuplicateData AS (
+	SELECT
+		ProductID,
+		ROW_NUMBER() 
+			OVER (
+					PARTITION BY ProductName
+				) AS RowCount,
+		ProductName
+		FROM product
+)
+
+SELECT 	
+	ProductID AS PotentialDuplicateProductID,
+    ProductName
+    FROM DuplicateDAta
+    WHERE RowCount > 1;
 
 -- 24
 
@@ -397,6 +463,55 @@ JOIN hyphen h
 WHERE pc.ProductCategoryID = 3
 GROUP BY h.BaseProductNumber
 ORDER BY h.BaseProductNumber;
+
+-- 27
+
+SELECT 
+	p.ProductID, 
+    p.ProductName, 
+    COUNT(DISTINCT pch.StandardCost) AS TotalPriceChanges 
+	FROM ProductCostHistory pch
+    JOIN product p
+		ON pch.ProductID = p.ProductID
+	GROUP BY pch.ProductID
+    ORDER BY ProductID;
+
+-- 28
+
+WITH PriceDifferenceTable AS (
+	SELECT 
+		pch2.ProductID,
+		pch2.StartDate AS CostChangeDate,
+		pch2.StandardCost,
+		pch1.StandardCost AS PreviousStandardCost,
+		pch1.StandardCost - pch2.StandardCost AS PriceDifference
+		FROM ProductCostHistory pch1
+		JOIN ProductCostHistory pch2
+			ON DATEDIFF(pch2.StartDate, pch1.EndDate) = 1 
+				AND pch1.ProductID = pch2.ProductID
+),
+
+MaxDiffTable AS (
+	SELECT
+		ProductID,
+		MAX(PriceDifference)
+			OVER (
+					PARTITION BY ProductID
+			) AS PriceDifference
+		FROM PriceDifferenceTable
+        WHERE PriceDifference != 0
+)
+    SELECT
+		DISTINCT p.ProductID,
+        p.CostChangeDate,
+        p.StandardCost,
+        p.PreviousStandardCost,
+        m.PriceDifference
+		FROM PriceDifferenceTable p
+        JOIN MaxDiffTable m
+			ON p.ProductID = m.ProductID 
+            AND p.PriceDifference = m.PriceDifference
+        ORDER BY p.PriceDifference DESC, p.ProductID;
 
 -- 29
 

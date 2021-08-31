@@ -159,6 +159,27 @@ Order by LastOrder desc;
 -- The column name of color was coded as 'Color' in the WHERE Statement
 -- It shouldn't be written as a string.
 
+-- 19
+
+WITH RawMarginData AS (
+	SELECT 
+		ProductID, 
+		ProductName, 
+		StandardCost, 
+		ListPrice,
+		ListPrice - StandardCost AS RawMargin
+		FROM product p
+        WHERE StandardCost != 0
+		ORDER BY ProductName
+)
+
+SELECT *, 
+	NTILE(4) OVER (
+        ORDER BY RawMargin DESC
+    ) AS Quartile
+	FROM RawMarginData
+	ORDER BY ProductName;
+
 -- 20
 
 SELECT c.CustomerID, CONCAT(c.FirstName, ' ', c.LastName) AS CustomerName, COUNT(DISTINCT soh.SalesPersonEmployeeID) AS TotalDifferentSalesPeople
@@ -201,6 +222,25 @@ SELECT ProductName
     GROUP BY ProductName
     HAVING COUNT(ProductName) > 1;
 
+-- 23
+
+WITH DuplicateData AS (
+	SELECT
+		ProductID,
+		ROW_NUMBER() 
+			OVER (
+					PARTITION BY ProductName
+				) AS RowCount,
+		ProductName
+		FROM product
+)
+
+SELECT 	
+	ProductID AS PotentialDuplicateProductID,
+    ProductName
+    FROM DuplicateDAta
+    WHERE RowCount > 1;
+
 -- 24
 
 WITH Changes AS (
@@ -239,6 +279,55 @@ JOIN hyphen h
 WHERE pc.ProductCategoryID = 3
 GROUP BY h.BaseProductNumber
 ORDER BY h.BaseProductNumber;
+
+-- 27
+
+SELECT 
+	p.ProductID, 
+    p.ProductName, 
+    COUNT(DISTINCT pch.StandardCost) AS TotalPriceChanges 
+	FROM ProductCostHistory pch
+    JOIN product p
+		ON pch.ProductID = p.ProductID
+	GROUP BY pch.ProductID
+    ORDER BY ProductID;
+
+-- 28
+
+WITH PriceDifferenceTable AS (
+	SELECT 
+		pch2.ProductID,
+		pch2.StartDate AS CostChangeDate,
+		pch2.StandardCost,
+		pch1.StandardCost AS PreviousStandardCost,
+		pch1.StandardCost - pch2.StandardCost AS PriceDifference
+		FROM ProductCostHistory pch1
+		JOIN ProductCostHistory pch2
+			ON DATEDIFF(pch2.StartDate, pch1.EndDate) = 1 
+				AND pch1.ProductID = pch2.ProductID
+),
+
+MaxDiffTable AS (
+	SELECT
+		ProductID,
+		MAX(PriceDifference)
+			OVER (
+					PARTITION BY ProductID
+			) AS PriceDifference
+		FROM PriceDifferenceTable
+        WHERE PriceDifference != 0
+)
+    SELECT
+		DISTINCT p.ProductID,
+        p.CostChangeDate,
+        p.StandardCost,
+        p.PreviousStandardCost,
+        m.PriceDifference
+		FROM PriceDifferenceTable p
+        JOIN MaxDiffTable m
+			ON p.ProductID = m.ProductID 
+            AND p.PriceDifference = m.PriceDifference
+        ORDER BY p.PriceDifference DESC, p.ProductID;
 
 -- 29
 
