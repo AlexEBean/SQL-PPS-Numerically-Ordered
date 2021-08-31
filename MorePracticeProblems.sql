@@ -203,11 +203,77 @@ SELECT ProductName
 
 -- 24
 
+WITH Changes AS (
+SELECT ProductID, COUNT(StandardCost) AS TotalPriceChanges 
+	FROM ProductCostHistory
+    GROUP BY ProductID
+    ORDER BY ProductID
+)
 
+SELECT TotalPriceChanges, COUNT(*) AS TotalProducts
+	FROM Changes
+    GROUP BY TotalPriceChanges
+    ORDER BY TotalPriceChanges;
 
 -- 26
 
+WITH hyphen AS (
+	SELECT p.ProductNumber, 
+    CASE 
+		WHEN LOCATE('-', p.productNumber)
+        THEN SUBSTR(p.productNumber, 1, LOCATE('-', p.productNumber) - 1)
+        ELSE p.ProductNumber
+	END AS BaseProductNumber
+    FROM product p 
+)
 
+
+SELECT h.BaseProductNumber, COUNT(*) AS TotalSizes
+FROM product p
+JOIN ProductSubCategory psc
+	ON p.ProductSubcategoryID = psc.ProductSubcategoryID
+JOIN ProductCategory pc
+	ON psc.ProductCategoryID = pc.ProductCategoryID
+JOIN hyphen h
+	ON p.ProductNumber = h.ProductNumber
+WHERE pc.ProductCategoryID = 3
+GROUP BY h.BaseProductNumber
+ORDER BY h.BaseProductNumber;
 
 -- 29
 
+USE auticon_more_sql_problems;
+
+with FraudSuspects as (
+ Select *
+ From Customer
+ Where
+ CustomerID in (
+ 29401
+ ,11194
+ ,16490
+ ,22698
+ ,26583
+ ,12166
+ ,16036
+ ,25110
+ ,18172
+ ,11997
+ ,26731
+ )
+)
+, SampleCustomers as (
+ Select *
+ From Customer
+ Where
+ CustomerID not in (
+	SELECT CustomerID
+    FROM FraudSuspects
+ )
+ Order by
+ Rand()
+ Limit 100
+)
+Select * From FraudSuspects
+Union all
+Select * From SampleCustomers;
