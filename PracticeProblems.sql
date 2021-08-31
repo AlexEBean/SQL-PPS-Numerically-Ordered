@@ -316,7 +316,7 @@ SELECT *
 
 SELECT OrderID, DATE(OrderDate) AS OrderDate, DATE(RequiredDate) AS RequiredDate, DATE(ShippedDate) AS ShippedDate
 	FROM orders
-    WHERE DATE(ShippedDate) >= DATE(RequiredDate)
+    WHERE ShippedDate >= RequiredDate
     ORDER BY OrderID;
 
 -- 42
@@ -604,3 +604,69 @@ SELECT
             InitialOrder.OrderDate) <= 5
 	ORDER BY c.CustomerID, InitialOrderID;
 
+-- Resolve with CTE instead of subqueries
+
+-- 28
+
+WITH MaxDate AS (
+	SELECT MAX(OrderDate) AS LastDate
+    FROM Orders
+)
+
+SELECT o.ShipCountry, AVG(o.Freight) AS AverageFreight
+	FROM orders o
+    JOIN MaxDate m
+		ON OrderDate
+			BETWEEN (DATE_ADD(m.LastDate, INTERVAL -12 MONTH))
+			AND m.LastDate
+    GROUP BY ShipCountry
+    ORDER BY AverageFreight DESC
+    LIMIT 3;
+
+-- 39
+
+WITH criteria AS (
+	SELECT OrderID
+			FROM OrderDetails
+			WHERE Quantity >= 60
+			GROUP BY OrderID, Quantity
+			HAVING COUNT(*) > 1
+)
+
+SELECT DISTINCT *
+	FROM  orderDetails od
+    JOIN criteria c
+		ON od.OrderID = c.OrderID
+    ORDER BY od.OrderID, od.Quantity;
+
+-- 40
+
+WITH PotentialProblemOrders AS (
+	Select
+	 OrderID
+	 From OrderDetails
+	 Where Quantity >= 60
+	 Group By OrderID, Quantity
+	 Having Count(*) > 1
+	)
+
+Select
+ DISTINCT OrderDetails.OrderID
+ ,ProductID
+ ,UnitPrice
+ ,Quantity
+ ,Discount
+From OrderDetails 
+ Join PotentialProblemOrders
+ on PotentialProblemOrders.OrderID = OrderDetails.OrderID
+Order by OrderID, ProductID;
+
+-- 41
+
+-- I don't think I need a subquery or CTE for this problem since I just need to compare two 
+-- preexisting columns on a row-by-row basis.
+
+SELECT OrderID, DATE(OrderDate) AS OrderDate, DATE(RequiredDate) AS RequiredDate, DATE(ShippedDate) AS ShippedDate
+	FROM orders
+    WHERE ShippedDate >= RequiredDate
+    ORDER BY OrderID;

@@ -1,3 +1,20 @@
+-- 28
+
+WITH MaxDate AS (
+	SELECT MAX(OrderDate) AS LastDate
+    FROM Orders
+)
+
+SELECT o.ShipCountry, AVG(o.Freight) AS AverageFreight
+	FROM orders o
+    JOIN MaxDate m
+		ON OrderDate
+			BETWEEN (DATE_ADD(m.LastDate, INTERVAL -12 MONTH))
+			AND m.LastDate
+    GROUP BY ShipCountry
+    ORDER BY AverageFreight DESC
+    LIMIT 3;
+
 -- 35
 
 SELECT EmployeeID, OrderID, OrderDate
@@ -11,6 +28,54 @@ SELECT OrderID
 	FROM orders
     ORDER BY RAND()
 	LIMIT 10;
+
+-- 39
+
+WITH criteria AS (
+	SELECT OrderID
+			FROM OrderDetails
+			WHERE Quantity >= 60
+			GROUP BY OrderID, Quantity
+			HAVING COUNT(*) > 1
+)
+
+SELECT DISTINCT *
+	FROM  orderDetails od
+    JOIN criteria c
+		ON od.OrderID = c.OrderID
+    ORDER BY od.OrderID, od.Quantity;
+
+-- 40
+
+WITH PotentialProblemOrders AS (
+	Select
+	 OrderID
+	 From OrderDetails
+	 Where Quantity >= 60
+	 Group By OrderID, Quantity
+	 Having Count(*) > 1
+	)
+
+Select
+ DISTINCT OrderDetails.OrderID
+ ,ProductID
+ ,UnitPrice
+ ,Quantity
+ ,Discount
+From OrderDetails 
+ Join PotentialProblemOrders
+ on PotentialProblemOrders.OrderID = OrderDetails.OrderID
+Order by OrderID, ProductID;
+
+-- 41
+
+-- I don't think I need a subquery or CTE for this problem since I just need to compare two 
+-- preexisting columns on a row-by-row basis.
+
+SELECT OrderID, DATE(OrderDate) AS OrderDate, DATE(RequiredDate) AS RequiredDate, DATE(ShippedDate) AS ShippedDate
+	FROM orders
+    WHERE ShippedDate >= RequiredDate
+    ORDER BY OrderID;
 
 -- 43
 
@@ -260,6 +325,39 @@ SELECT *
 ORDER BY IFNULL(SupplierCountry, CustomerCountry);
 
 -- More SQL (Second Problem Set)
+
+-- 8
+
+WITH dates AS (
+	SELECT DISTINCT DATE_FORMAT(StartDate, '%Y/%m - %M') AS CalendarMonth, COUNT(*) AS TotalRows, StartDate
+		FROM ProductListPriceHistory
+        GROUP BY DATE_FORMAT(StartDate, '%Y/%m - %M')
+),
+
+minmax AS (
+	SELECT MIN(d.StartDate) AS min, MAX(d.StartDate) AS max
+    FROM dates d
+)
+
+SELECT DISTINCT DATE_FORMAT(c.CalendarDate, '%Y/%m - %M') AS CalendarMonth, IFNULL(d.TotalRows, 0) AS TotalRows
+	FROM calendar c
+    LEFT JOIN dates d
+		ON DATE_FORMAT(c.CalendarDate, '%Y/%m - %M') = d.CalendarMonth
+	JOIN minmax m
+		ON c.CalendarDate
+		BETWEEN m.min AND m.max;
+
+-- 10
+
+SELECT p.ProductID, p.ProductName
+	FROM product p
+    LEFT JOIN ProductListPriceHistory  plph
+		ON p.ProductID = plph.ProductID
+	WHERE plph.ProductID IS NULL
+    ORDER BY p.ProductID;
+
+-- I don't think I need a subquery or CTE for this problem since I just need to compare two 
+-- preexisting columns on a row-by-row basis.
 
 -- 24
 
