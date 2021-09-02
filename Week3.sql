@@ -687,19 +687,207 @@ SELECT
 
 -- 36
 
-
+SELECT 
+	o1.SalesOrderID, 
+	e.EventName, 
+    DATE_FORMAT(o1.EventDateTime, '%Y-%m-%d %h:%i') AS TrackingEventDate, 
+    DATE_FORMAT(o2.EventDateTime, '%Y-%m-%d %h:%i') AS NextTrackingEventDate,
+    TIMESTAMPDIFF(HOUR, o1.EventDateTime, o2.EventDateTime) AS HoursInStage
+	FROM OrderTracking o1
+	JOIN TrackingEvent e
+		USING(TrackingEventID)
+    LEFT JOIN OrderTracking o2
+		ON o1.SalesOrderID = o2.SalesOrderID
+        AND o1.TrackingEventID + 1 = o2.TrackingEventID
+    WHERE o1.SalesOrderID
+		IN (68857, 70531, 70421)
+	ORDER BY o1.SalesOrderID;
 
 -- 37
 
+WITH HourDiffTest AS (
+	SELECT 
+		CASE
+			WHEN OnlineOrderFlag = 1
+			THEN 'Online'
+			ELSE 'Offline'
+		END AS OnlineOfflineStatus,
+		e.EventName,
+		TIMESTAMPDIFF(HOUR, o1.EventDateTime, o2.EventDateTime) AS HoursDiff,
+        e.TrackingEventID,
+        s.SalesOrderID
+		FROM OrderTracking o1
+		JOIN TrackingEvent e
+			USING(TrackingEventID)
+		JOIN SalesOrderHeader s
+			USING(SalesOrderID)
+		LEFT JOIN OrderTracking o2
+			ON o1.SalesOrderID = o2.SalesOrderID
+				AND o1.TrackingEventID != o2.TrackingEventID
+),
 
+ProcessingInfo AS (
+	SELECT
+		OnlineOfflineStatus,
+		EventName,
+		MIN(
+			CASE 
+				 WHEN HoursDiff > 0
+				 THEN HoursDiff
+				 ELSE NULL
+			END
+            ) AS HoursInStage,
+        TrackingEventID
+		FROM HourDiffTest
+		GROUP BY OnlineOfflineStatus, SalesOrderID, TrackingEventID
+)
+
+SELECT 
+	OnlineOfflineStatus,
+    EventName,
+    AVG(HoursInStage) AS AverageHoursSpentInStage
+    FROM ProcessingInfo
+    GROUP BY OnlineOfflineStatus, TrackingEventID
+    ORDER BY OnlineOfflineStatus, TrackingEventID;
 
 -- 38
 
+WITH HourDiffTest AS (
+	SELECT 
+		CASE
+			WHEN OnlineOrderFlag = 1
+			THEN 'Online'
+			ELSE 'Offline'
+		END AS OnlineOfflineStatus,
+		e.EventName,
+		TIMESTAMPDIFF(HOUR, o1.EventDateTime, o2.EventDateTime) AS HoursDiff,
+        e.TrackingEventID,
+        s.SalesOrderID
+		FROM OrderTracking o1
+		JOIN TrackingEvent e
+			USING(TrackingEventID)
+		JOIN SalesOrderHeader s
+			USING(SalesOrderID)
+		LEFT JOIN OrderTracking o2
+			ON o1.SalesOrderID = o2.SalesOrderID
+				AND o1.TrackingEventID != o2.TrackingEventID
+),
 
+ProcessingInfo AS (
+	SELECT
+		OnlineOfflineStatus,
+		EventName,
+		MIN(
+			CASE 
+				 WHEN HoursDiff > 0
+				 THEN HoursDiff
+				 ELSE NULL
+			END
+            ) AS HoursInStage,
+        TrackingEventID
+		FROM HourDiffTest
+		GROUP BY OnlineOfflineStatus, SalesOrderID, TrackingEventID
+),
+
+OfflineAggregateData AS (
+	SELECT 
+		EventName,
+		AVG(HoursInStage) AS OfflineAvgHoursInStage,
+        TrackingEventID
+		FROM ProcessingInfo
+        WHERE OnlineOfflineStatus = 'Offline'
+		GROUP BY TrackingEventID
+),
+
+OnlineAggregateData AS (
+	SELECT 
+		EventName,
+		AVG(HoursInStage) AS OnlineAvgHoursInStage,
+        TrackingEventID
+		FROM ProcessingInfo
+        WHERE OnlineOfflineStatus = 'Online'
+		GROUP BY TrackingEventID
+)
+
+SELECT 
+	ofd.EventName,
+    ofd.OfflineAvgHoursInStage,
+    ond.OnlineAvgHoursInStage
+	FROM OfflineAggregateData ofd
+    JOIN OnlineAggregateData ond
+		USING(EventName)
+	ORDER BY ofd.TrackingEventID;
 
 -- 39
 
+WITH BaseData AS (
+	SELECT 
+		c.CustomerID,
+		CONCAT(c.FirstName, ' ', c.LastName) AS CustomerName,
+		psc.ProductSubCategoryName,
+		sod.LineTotal
+		FROM customer c
+		JOIN SalesOrderHeader soh
+			USING(CustomerID)
+		JOIN SalesOrderDetail sod
+			USING(SalesOrderID)
+		JOIN product p
+			USING(ProductID)
+		JOIN ProductSubCategory psc
+			USING(ProductSubCategoryID)
+		WHERE c.CustomerID
+			IN(13763, 13836, 20331, 21113, 26313)
+),
 
+TopSubData1 AS (
+	SELECT 
+		CustomerID,
+        CustomerName,
+        MAX(LineTotal),
+        ProductSubCategoryName AS TopProdSubCat1
+        FROM BaseData
+        GROUP BY CustomerID
+), 
+
+TopSubData2 AS (
+	SELECT 
+		t2.CustomerID,
+        t2.CustomerName,
+        MAX(LineTotal),
+        t1.TopProdSubCat1,
+        t2.ProductSubCategoryName AS TopProdSubCat2
+        FROM BaseData t2
+        JOIN TopSubData1 t1
+			USING(CustomerID)
+		WHERE t2.ProductSubCategoryName != t1.TopProdSubCat1
+        GROUP BY CustomerID
+),
+
+TopSubData3 AS (
+	SELECT 
+		t3.CustomerID,
+		t3.CustomerName,
+		MAX(LineTotal),
+		t2.TopProdSubCat1,
+		t2.TopProdSubCat2,
+		t3.ProductSubCategoryName AS TopProdSubCat3
+		FROM BaseData t3
+		JOIN TopSubData2 t2
+			USING(CustomerID)
+		WHERE t3.ProductSubCategoryName NOT IN (t2.TopProdSubCat1, t2.TopProdSubCat2)
+		GROUP BY CustomerID
+)
+
+SELECT 
+	t2.CustomerID,
+    t2.CustomerName,
+    t2.TopProdSubCat1,
+    t2.TopProdSubCat2,
+    t3.TopProdSubCat3
+	FROM TopSubData2 t2
+    LEFT JOIN TopSubData3 t3
+		USING(CustomerID)
+	ORDER BY CustomerID;
 
 -- 40
 
