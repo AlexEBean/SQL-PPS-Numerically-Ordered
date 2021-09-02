@@ -33,3 +33,5 @@ with FraudSuspects as (
 Select * From FraudSuspects
 Union all
 Select * From SampleCustomers;
+
+-- I used a subquery rather than hard-coding the list again

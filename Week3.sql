@@ -551,4 +551,155 @@ Select * From FraudSuspects
 Union all
 Select * From SampleCustomers;
 
--- I used a subquery rather than har-coding the list again
+-- I used a subquery rather than hard-coding the list again
+
+-- 30
+
+SELECT 
+    c.CalendarDate,
+    plph1.ProductID,
+    COUNT(*) AS TotalRows
+	FROM ProductListPriceHistory plph1
+	JOIN ProductListPriceHistory plph2
+		ON 
+			plph2.StartDate < plph1.EndDate
+			AND plph2.EndDate > plph1.StartDate
+            AND plph1.ProductID = plph2.ProductID
+            AND (
+				plph1.StartDate != plph2.StartDate 
+				OR plph1.EndDate != plph2.EndDate
+				)
+	JOIN calendar c
+		ON c.CalendarDate 
+			BETWEEN plph2.StartDate AND plph1.EndDate
+            AND c.CalendarDate BETWEEN plph1.StartDate AND plph2.EndDate
+	GROUP BY ProductID, CalendarDate
+    ORDER BY ProductID, CalendarDate;
+
+-- 31
+
+SELECT 
+	c.CalendarDate,
+	plph1.ProductID,
+	COUNT(*) + 1 AS TotalRows
+	FROM ProductListPriceHistory plph1
+	JOIN ProductListPriceHistory plph2
+		ON 
+			(plph2.StartDate < plph1.EndDate OR plph1.EndDate IS NULL)
+			AND (plph2.EndDate > plph1.StartDate OR plph2.EndDate IS NULL)
+			AND plph1.ProductID = plph2.ProductID
+			AND (
+				plph1.StartDate != plph2.StartDate 
+				OR plph1.EndDate != plph2.EndDate
+				)
+	JOIN calendar c
+		ON 
+			c.CalendarDate BETWEEN plph2.StartDate AND plph1.EndDate
+				AND plph2.StartDate < plph1.EndDate
+	GROUP BY ProductID, CalendarDate
+	ORDER BY ProductID, CalendarDate;
+
+-- 32
+
+WITH LastYearOrders AS (
+SELECT DISTINCT DATE_FORMAT(OrderDate, '%Y/%m - %M') AS CalendarMonth,
+		COUNT(*) AS TotalOrders
+	FROM SalesOrderHeader
+    WHERE OrderDate 
+		BETWEEN (SELECT DATE_ADD(MAX(OrderDate), INTERVAL -12 MONTH) FROM SalesOrderHeader)
+		AND (SELECT MAX(OrderDate) FROM SalesOrderHeader)
+	GROUP BY CalendarMonth
+	)
+
+SELECT 
+	*,
+    (@RunningTotal := @RunningTotal + TotalOrders) AS RunningTotal
+    FROM LastYearOrders;
+
+-- 33
+
+WITH TotalOrdersTable AS (
+	SELECT 
+		soh.TerritoryID,
+		st.TerritoryName,
+		st.CountryCode,
+		COUNT(*) AS TotalOrders
+		FROM SalesOrderHeader soh
+		JOIN SalesTerritory st
+			USING(TerritoryID)
+		GROUP BY soh.TerritoryID
+)
+    
+SELECT 
+	t.TerritoryID,
+	t.TerritoryName,
+	t.CountryCode,
+    t.TotalOrders,
+    COUNT(*) AS TotalLateOrders
+	FROM TotalOrdersTable t
+    JOIN SalesOrderHeader s
+		ON t.TerritoryID = s.TerritoryID
+        WHERE s.DueDate < s.ShipDate
+	GROUP BY t.TerritoryID
+    ORDER BY t.TerritoryID;
+
+-- 35
+
+WITH LastOrder AS (
+	SELECT 
+		c.CustomerID,
+		CONCAT(c.FirstName, ' ', c.LastName) AS CustomerName,
+		MAX(h.OrderDate) AS OrderDate,
+        h.SalesOrderID
+		FROM customer c
+		JOIN SalesOrderHeader h
+			USING(CustomerID)
+		WHERE c.CustomerID 
+			IN (19500, 19792, 24409, 26785)
+		GROUP BY c.CustomerID
+),
+
+MaxLastOrder AS (
+	SELECT 
+		l.CustomerID,
+		l.CustomerName,
+		MAX(d.UnitPrice) AS MaxPrice
+		FROM LastOrder l
+		JOIN SalesOrderDetail d
+			USING(SalesOrderID)
+		JOIN Product p
+			USING(ProductID)
+		GROUP BY l.CustomerName
+)
+
+SELECT 
+	DISTINCT m.CustomerID,
+    m.CustomerName,
+    psc.ProductSubCategoryName
+	FROM MaxLastOrder m
+    JOIN SalesOrderDetail d
+		ON m.MaxPrice = d.UnitPrice
+    JOIN Product p
+		USING(ProductID)
+    JOIN ProductSubCategory psc
+		USING(ProductSubCategoryID)
+	ORDER BY m.CustomerID
+
+-- 36
+
+
+
+-- 37
+
+
+
+-- 38
+
+
+
+-- 39
+
+
+
+-- 40
+
