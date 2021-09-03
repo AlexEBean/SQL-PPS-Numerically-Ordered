@@ -76,3 +76,42 @@ SELECT
     FROM CustomerAndOrder;
 
 SELECT * FROM CloneCustomerAndOrder;
+
+-- Data to put in cmd
+
+CREATE DATABASE USPopulation;
+
+USE USPopulation;
+
+CREATE TABLE PopData (
+    `rank` INT PRIMARY KEY CHECK(`rank` > 0),
+    State VARCHAR(50),
+    Pop INT,
+    Growth DECIMAL(5, 4),
+    Pop2018 INT,
+    Pop2010 INT,
+    growthSince2010 DECIMAL(5, 4),
+    Percent DECIMAL(5, 4),
+    density DECIMAL(10, 4)
+);
+
+-- This restriction can be removed from MySQL Workbench 8.0 in the following way. 
+-- Edit the connection, on the Connection tab, go to the 'Advanced' sub-tab, and in the 'Others:' box 
+-- add the line OPT_LOCAL_INFILE=1.
+-- This should allow a client using the Workbench to run LOAD DATA INFILE as usual.
+
+LOAD DATA LOCAL INFILE "C:/Users/Alex/Downloads/USStatesandTerritories2021PopulationData.csv" INTO TABLE PopData
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+(`rank`, State, Pop, Growth, Pop2018, Pop2010, growthSince2010, Percent, density);
+
+SELECT * FROM PopData
+	ORDER BY Pop;
+
+SELECT 'rank', 'State', 'Pop', 'Growth', 'Pop2018', 'Pop2010', 'growthSince2010', 'Percent', 'density'
+UNION
+SELECT * FROM PopData
+	ORDER BY CAST(Pop AS UNSIGNED)
+    INTO OUTFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/MySQLToCSV.csv'
+    FIELDS ENCLOSED BY '"'
+    TERMINATED BY ',';
