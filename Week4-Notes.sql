@@ -40,4 +40,39 @@ INSERT INTO SalesSummary
    VALUES
 	('cucumber', 100.25, 90, 2);
 
--- CREATE TABLE AS SELECT (CTAS).
+-- CREATE TABLE AS SELECT (CTAS). Example uses data from Second Problem Set database
+
+CREATE TEMPORARY TABLE CustomerAndOrder
+	SELECT 
+		c.CustomerID,
+        CONCAT(c.FirstName, ' ', c.LastName) AS CustomerName,
+        o.SalesOrderID
+        FROM customer c
+        JOIN SalesOrderHeader o
+			USING(CustomerID)
+		ORDER BY c.CustomerID;
+    
+SELECT * FROM CustomerAndOrder;
+
+-- Clone a Table
+
+-- Create Clone Table
+CREATE TEMPORARY TABLE CloneCustomerAndOrder(
+	CustomerID INT ,
+    CustomerName VARCHAR(101),
+    SalesOrderID INT
+);
+
+-- Insert Data.  The SELECT takes the place of VALUES
+INSERT INTO CloneCustomerAndOrder (
+	CustomerID,
+    CustomerName,
+    SalesOrderID)
+
+SELECT 
+	CustomerID,
+    CustomerName,
+    SalesOrderID
+    FROM CustomerAndOrder;
+
+SELECT * FROM CloneCustomerAndOrder;
