@@ -787,36 +787,15 @@ ProcessingInfo AS (
         TrackingEventID
 		FROM HourDiffTest
 		GROUP BY OnlineOfflineStatus, SalesOrderID, TrackingEventID
-),
-
-OfflineAggregateData AS (
-	SELECT 
-		EventName,
-		AVG(HoursInStage) AS OfflineAvgHoursInStage,
-        TrackingEventID
-		FROM ProcessingInfo
-        WHERE OnlineOfflineStatus = 'Offline'
-		GROUP BY TrackingEventID
-),
-
-OnlineAggregateData AS (
-	SELECT 
-		EventName,
-		AVG(HoursInStage) AS OnlineAvgHoursInStage,
-        TrackingEventID
-		FROM ProcessingInfo
-        WHERE OnlineOfflineStatus = 'Online'
-		GROUP BY TrackingEventID
 )
 
 SELECT 
-	ofd.EventName,
-    ofd.OfflineAvgHoursInStage,
-    ond.OnlineAvgHoursInStage
-	FROM OfflineAggregateData ofd
-    JOIN OnlineAggregateData ond
-		USING(EventName)
-	ORDER BY ofd.TrackingEventID;
+	EventName,
+    AVG(IF (OnlineOfflineStatus = 'Offline', HoursInStage, NULL)) AS OfflineAvgHoursInStage,
+    AVG(IF (OnlineOfflineStatus = 'Online', HoursInStage, NULL)) AS OnlineAvgHoursInStage
+	FROM ProcessingInfo
+    GROUP BY TrackingEventID
+	ORDER BY TrackingEventID;
 
 -- 39
 
@@ -891,3 +870,25 @@ SELECT
 
 -- 40
 
+WITH DateDiffData AS (
+	SELECT 
+		p1.ProductID,
+		p1.EndDate,
+		p2.StartDate,
+		MIN(DATEDIFF(p2.StartDate, p1.EndDate)) AS TimeDiff
+		FROM ProductListPriceHistory p1
+		JOIN ProductListPriceHistory p2
+			ON p1.ProductID = p2.ProductID
+            AND p2.StartDate > p1.EndDate
+		GROUP BY ProductID, EndDate
+)
+
+SELECT 
+	d.ProductID,
+    c.CalendarDate AS DateWithMissingPrice
+	FROM DateDiffData d
+    JOIN Calendar c
+		ON c.CalendarDate > d.EndDate
+			AND c.CalendarDate < d.StartDate
+    WHERE TimeDiff != 1
+	ORDER BY d.ProductID, c.CalendarDate;
