@@ -56,6 +56,9 @@ SELECT * FROM CustomerAndOrder;
 
 -- Clone a Table
 
+-- Shows Table name and Create Table function used to create it
+SHOW CREATE TABLE CustomerAndOrder;
+
 -- Create Clone Table
 CREATE TEMPORARY TABLE CloneCustomerAndOrder(
 	CustomerID INT ,
