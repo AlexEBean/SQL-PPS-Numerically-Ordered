@@ -14,11 +14,11 @@
 -- 4
 
 -- It's probably used for Home Address, Business Address, etc.
--- VARCHAR(20) should work in this case.
+-- VARCHAR(50) should work in this case.
 
 -- 5
 
--- VARCHAR(20)
+-- VARCHAR(50)
 
 -- 6
 
@@ -37,7 +37,7 @@ ADD COLUMN Level INT NOT NULL;
 -- 9
 
 ALTER TABLE Employee
-ADD COLUMN Employee_picture VARCHAR(3000) NOT NULL;
+ADD COLUMN Employee_picture BLOB NOT NULL;
 
 -- 10
 
