@@ -1,56 +1,76 @@
 -- 2
 
--- WITH InitialData AS (
--- 	SELECT 
--- 		FileNM, 
---         SUBSTRING_INDEX(REPLACE(FileNM, "TEST_", ""), "_", 3) AS CompanyName,
--- 		REVERSE(SUBSTRING_INDEX(REPLACE(FileNM, "TEST_", ""), ".", 1)) AS ReversedFileNM,
---         ROUND (   
---         (
---             LENGTH(FileNM)
---             - LENGTH( REPLACE (FileNM, "_", "") ) 
---         ) / LENGTH("_")        
---     ) AS UnderscoreCount    
--- 	FROM loaded_files
--- ),
+WITH InitialData AS (
+	SELECT 
+		FileNM, 
+        SUBSTRING_INDEX(REPLACE(FileNM, "TEST_", ""), "_", 3) AS CompanyName,
+		REVERSE(SUBSTRING_INDEX(REPLACE(FileNM, "TEST_", ""), ".", 1)) AS ReversedFileNM,
+        ROUND (   
+        (
+            LENGTH(FileNM)
+            - LENGTH( REPLACE (FileNM, "_", "") ) 
+        ) / LENGTH("_")        
+    ) AS UnderscoreCount    
+	FROM loaded_files
+),
 
--- DataICanUse AS (
--- 	SELECT
---     FileNM,
---     REPLACE(CompanyName, "_", " ") AS CompanyName,
---     CASE
--- 		WHEN FileNM REGEXP "^TEST_"
---         THEN SUBSTRING_INDEX(REVERSE(SUBSTRING_INDEX(ReversedFileNM, "_", UnderScoreCount - 3)), "_", 1)
--- 		ELSE SUBSTRING_INDEX(REVERSE(SUBSTRING_INDEX(ReversedFileNM, "_", UnderScoreCount - 2)), "_", 1) 
---         END AS DateInfo
--- 	FROM InitialData
--- ),
+DataICanUse AS (
+	SELECT
+    FileNM,
+    REPLACE(CompanyName, "_", " ") AS CompanyName,
+    CASE
+		WHEN FileNM REGEXP "^TEST_"
+        THEN SUBSTRING_INDEX(REVERSE(SUBSTRING_INDEX(ReversedFileNM, "_", UnderScoreCount - 3)), "_", 1)
+		ELSE SUBSTRING_INDEX(REVERSE(SUBSTRING_INDEX(ReversedFileNM, "_", UnderScoreCount - 2)), "_", 1) 
+        END AS DateInfo
+	FROM InitialData
+),
 
--- DateData AS (
--- 	SELECT 
--- 	DISTINCT CompanyName,
---     CASE 
--- 		WHEN CHAR_LENGTH(DateInfo) = 8
---         THEN SUBSTRING_INDEX(STR_TO_DATE(DateInfo, '%m%d%Y'), "-", 2)
---         WHEN CHAR_LENGTH(DateInfo) = 7
---         THEN SUBSTRING_INDEX(STR_TO_DATE(DateInfo, '%b%Y'), "-", 2)
--- 	END AS Date
--- 	FROM DataICanUse
--- ),
+DateData AS (
+	SELECT 
+	DISTINCT CompanyName,
+    CASE 
+		WHEN CHAR_LENGTH(DateInfo) = 8
+        THEN SUBSTRING_INDEX(STR_TO_DATE(DateInfo, '%m%d%Y'), "-", 2)
+        WHEN CHAR_LENGTH(DateInfo) = 7
+        THEN SUBSTRING_INDEX(STR_TO_DATE(DateInfo, '%b%Y'), "-", 2)
+	END AS Date
+	FROM DataICanUse
+),
 
--- MinMaxData AS (
--- 	SELECT 
--- 		CompanyName,
--- 		SUBSTRING_INDEX(MIN(Date), "-", 2) AS MinimumDate,
--- 		SUBSTRING_INDEX(MAX(Date), "-", 2) AS MaximumDate
--- 		FROM DateData
--- 		GROUP BY CompanyName
--- )
+MinMaxData AS (
+	SELECT 
+		CompanyName,
+		STR_TO_DATE(CONCAT(SUBSTRING_INDEX(MIN(Date), "-", 2), '-01'), '%Y-%m-%d') AS MinimumDate,
+        STR_TO_DATE(CONCAT(SUBSTRING_INDEX(MAX(Date), "-", 2), '-01'), '%Y-%m-%d') AS MaximumDate
+		FROM DateData
+		GROUP BY CompanyName
+),
 
--- SELECT *,
--- 	d1.CompanyName,
---     STR_TO_DATE(d1.Date, '%Y-%m')  AS MissingMonth
--- FROM DateData d1
+FinalData AS (
+	SELECT
+	d.CompanyName,
+    STR_TO_DATE(CONCAT(d.Date, '-01'), '%Y-%m-%d') AS Date,
+    m.MinimumDate,
+    m.MaximumDate
+	FROM DateData d
+    JOIN MinMaxData m
+		ON d.CompanyName = m.CompanyName
+)
+
+SELECT
+	f1.CompanyName,
+	DATE_FORMAT(f1.Date + INTERVAL 1 MONTH, '%m/%Y') AS MissingDate
+	FROM FinalData f1
+    LEFT JOIN FinalData f2
+		ON f1.Date = f2.Date - INTERVAL 1 MONTH
+			AND f1.CompanyName = f2.CompanyName
+            OR f1.Date = f1.MaximumDate
+            OR f1.Date = f1.MinimumDate
+	WHERE f1.Date BETWEEN f1.MinimumDate AND f1.MaximumDate
+		AND f2.Date IS NULL
+    ORDER BY f1.CompanyName, f1.Date;
+
 
 -- 3
 
