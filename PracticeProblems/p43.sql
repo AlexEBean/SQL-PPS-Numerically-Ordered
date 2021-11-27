@@ -9,7 +9,7 @@ SELECT e.EmployeeID, e.LastName, COUNT(*) AS TotalLateOrders
     
 SELECT o.EmployeeID, l.LastName, COUNT(*) AS AllOrders, l.TotalLateOrders AS LateOrders
 	FROM orders o
-    LEFT JOIN LateOrders l
+    JOIN LateOrders l
 		ON o.EmployeeID = l.EmployeeID
-	GROUP BY EmployeeID, LastName
+	GROUP BY EmployeeID
     ORDER BY EmployeeID;

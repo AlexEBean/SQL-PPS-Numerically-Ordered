@@ -13,5 +13,5 @@ SELECT o.EmployeeID, e.LastName, COUNT(*) AS AllOrders, l.TotalLateOrders AS Lat
 		ON o.EmployeeID = l.EmployeeID
 	JOIN employees e
 		ON e.EmployeeID = o.EmployeeID
-	GROUP BY EmployeeID, LastName
+	GROUP BY EmployeeID
     ORDER BY EmployeeID;

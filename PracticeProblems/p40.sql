@@ -1,3 +1,5 @@
+-- Add DISTINCT
+
 WITH PotentialProblemOrders AS (
 	Select
 	 OrderID

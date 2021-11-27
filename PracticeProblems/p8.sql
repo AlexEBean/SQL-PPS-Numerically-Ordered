@@ -5,6 +5,6 @@ SELECT OrderID, CustomerID, ShipCountry
 
 -- This also works. 
 
--- SELECT OrderID, CustomerID, ShipCountry
--- 	FROM orders
---     WHERE IN ('France', 'Belgium');
+SELECT OrderID, CustomerID, ShipCountry
+	FROM orders
+    WHERE ShipCountry IN ('France', 'Belgium');

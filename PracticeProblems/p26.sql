@@ -4,7 +4,7 @@ SELECT ShipCountry, AVG(CASE WHEN OrderDate LIKE '2015%' THEN Freight END) AS Av
     ORDER BY AverageFreight DESC
     LIMIT 3;
 
--- Shouldn't use conditional logic withing aggrage function unless absolutely needed
+-- Shouldn't use conditional logic within aggregate function unless absolutely needed
 -- It's unnecessary to convert OrderDate into a string using LIKE
 -- The following answer is faster since it doesn't require converting OrderDate
 
