@@ -1,4 +1,9 @@
-SELECT p.ProductID, DATE(h.OrderDate) AS OrderDate, d.OrderQty AS Qty, DATE(p.SellStartDate) AS SellStartDate, DATE(p.SellEndDate) AS SellEndDate, 
+SELECT 
+	p.ProductID, 
+	DATE(h.OrderDate) AS OrderDate, 
+	d.OrderQty AS Qty, 
+	DATE(p.SellStartDate) AS SellStartDate, 
+	DATE(p.SellEndDate) AS SellEndDate, 
 	CASE
 		WHEN h.OrderDate < p.SellStartDate
         THEN 'Sold before start date'
