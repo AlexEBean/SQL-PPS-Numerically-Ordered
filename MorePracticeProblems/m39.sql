@@ -1,5 +1,7 @@
 USE auticon_more_sql_problems;
 
+
+
 WITH BaseData AS (
 	SELECT 
 		c.CustomerID,
@@ -27,7 +29,7 @@ TopSubData1 AS (
         ProductSubCategoryName AS TopProdSubCat1
         FROM BaseData
         GROUP BY CustomerID
-), 
+),
 
 TopSubData2 AS (
 	SELECT 
@@ -37,7 +39,7 @@ TopSubData2 AS (
         t1.TopProdSubCat1,
         t2.ProductSubCategoryName AS TopProdSubCat2
         FROM BaseData t2
-        RIGHT JOIN TopSubData1 t1
+        JOIN TopSubData1 t1
 			USING(CustomerID)
 		WHERE t2.ProductSubCategoryName != t1.TopProdSubCat1
         GROUP BY CustomerID
@@ -48,8 +50,6 @@ TopSubData3 AS (
 		t3.CustomerID,
 		t3.CustomerName,
 		MAX(LineTotal),
-		t2.TopProdSubCat1,
-		t2.TopProdSubCat2,
 		t3.ProductSubCategoryName AS TopProdSubCat3
 		FROM BaseData t3
 		JOIN TopSubData2 t2
@@ -70,3 +70,5 @@ SELECT
     LEFT JOIN TopSubData3 t3
 		USING(CustomerID)
 	ORDER BY CustomerID;
+
+
